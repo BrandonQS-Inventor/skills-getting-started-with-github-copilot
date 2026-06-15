@@ -26,44 +26,77 @@ def build_activity_path(activity_name: str, suffix: str = "") -> str:
 
 
 def test_get_activities_returns_activity_list(client):
-    response = client.get("/activities")
+    # Arrange
+    expected_activity_name = "Chess Club"
 
-    assert response.status_code == 200
+    # Act
+    response = client.get("/activities")
     data = response.json()
-    assert "Chess Club" in data
-    assert data["Chess Club"]["max_participants"] == 12
-    assert isinstance(data["Chess Club"]["participants"], list)
+
+    # Assert
+    assert response.status_code == 200
+    assert expected_activity_name in data
+    assert data[expected_activity_name]["max_participants"] == 12
+    assert isinstance(data[expected_activity_name]["participants"], list)
 
 
 def test_signup_adds_participant(client):
+    # Arrange
+    activity_name = "Chess Club"
     email = "student1@mergington.edu"
-    response = client.post(build_activity_path("Chess Club", "/signup"), params={"email": email})
+    signup_url = build_activity_path(activity_name, "/signup")
 
+    # Act
+    response = client.post(signup_url, params={"email": email})
+    response_data = response.json()
+
+    # Assert
     assert response.status_code == 200
-    assert response.json()["message"] == f"Signed up {email} for Chess Club"
-    assert email in activities["Chess Club"]["participants"]
+    assert response_data["message"] == f"Signed up {email} for {activity_name}"
+    assert email in activities[activity_name]["participants"]
 
 
 def test_signup_duplicate_returns_400(client):
+    # Arrange
+    activity_name = "Chess Club"
     email = "michael@mergington.edu"
-    response = client.post(build_activity_path("Chess Club", "/signup"), params={"email": email})
+    signup_url = build_activity_path(activity_name, "/signup")
 
+    # Act
+    response = client.post(signup_url, params={"email": email})
+    response_data = response.json()
+
+    # Assert
     assert response.status_code == 400
-    assert response.json()["detail"] == "Student is already signed up for this activity"
+    assert response_data["detail"] == "Student is already signed up for this activity"
 
 
 def test_remove_participant(client):
+    # Arrange
+    activity_name = "Chess Club"
     email = "michael@mergington.edu"
-    response = client.delete(build_activity_path("Chess Club", "/participants"), params={"email": email})
+    remove_url = build_activity_path(activity_name, "/participants")
 
+    # Act
+    response = client.delete(remove_url, params={"email": email})
+    response_data = response.json()
+
+    # Assert
     assert response.status_code == 200
-    assert response.json()["message"] == f"Removed {email} from Chess Club"
-    assert email not in activities["Chess Club"]["participants"]
+    assert response_data["message"] == f"Removed {email} from {activity_name}"
+    assert email not in activities[activity_name]["participants"]
 
 
 def test_remove_nonexistent_participant_returns_404(client):
+    # Arrange
+    activity_name = "Chess Club"
     email = "nobody@mergington.edu"
-    response = client.delete(build_activity_path("Chess Club", "/participants"), params={"email": email})
+    remove_url = build_activity_path(activity_name, "/participants")
 
+    # Act
+    response = client.delete(remove_url, params={"email": email})
+    response_data = response.json()
+
+    # Assert
     assert response.status_code == 404
-    assert response.json()["detail"] == "Participant not found"
+    assert response_data["detail"] == "Participant not found"
